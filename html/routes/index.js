@@ -1,12 +1,16 @@
 var express = require('express');
+var http = require('http');
 var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.render('index', { title: 'Kanjisama' });
 });
 
-module.exports = router;
+/* Empty query. */
+router.get('/query-data', function(req, res) {
+  res.send('Campo vacio');
+});
 
 /* Proxy for Jisho.org API */
 router.get('/proxy/:parametros', function(req, res, next) {
@@ -78,3 +82,5 @@ router.get('/query-data/:parametros', function(req, res, next) {
   connection.query(queryTexto, sqlCallback);
   
 });
+
+module.exports = router;
