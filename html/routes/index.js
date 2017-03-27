@@ -8,7 +8,30 @@ router.get('/', function(req, res, next) {
 
 module.exports = router;
 
+/* Proxy for Jisho.org API */
+router.get('/proxy/:parametros', function(req, res, next) {
+  var parametros = req.params.parametros;
+  parametros = encodeURI(parametros)
+  var url = "/api/v1/search/words?keyword="+parametros;
+  
+  var options = {
+    host: 'jisho.org',
+    path: '/api/v1/search/words?keyword='+parametros
+  };
+  callback = function(response) {
+    var str = '';
+    //another chunk of data has been recieved, so append it to `str`
+    response.on('data', function (chunk) {
+      str += chunk;
+    });
+    //the whole response has been recieved, so we just print it out here
+    response.on('end', function () {
+      res.send(str);
+    });
+  }
+  http.request(options, callback).end();
 
+});
 
 /* GET table with info. */
 router.get('/query-data/:parametros', function(req, res, next) {
