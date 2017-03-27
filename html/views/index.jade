@@ -1,5 +1,182 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  div(class="container")
+  
+    form
+      div(class="form-group")
+        label= 'Diccionario de "Kanji Para Recordar":'
+        input(type="text", id="caja-componer", class="form-control")
+    
+    div(class="text-center")
+      button(type="button", class="btn btn-primary", id='limpiar')
+        span!= '<span class="glyphicon glyphicon-trash"></span> Limpiar'
+      button(type="button", class="btn btn-primary open-popup-link", id="google")
+        span!= '<span class="glyphicon glyphicon-search"></span> Google</button>'
+      button(type="button", class="btn btn-primary open-popup-link", id="jisho-button",  data-toggle="modal", data-target="#myModal")
+        span!= '<span class="glyphicon glyphicon-search"></span> Jisho</button>'
+
+    form
+      div(class="form-group")
+        label(for="caja-busqueda")
+          | buscar:
+        input(type="text",class="form-control", id="caja-busqueda")
+    
+    div(id='vacio')
+      | Escribe algo para iniciar la búsqueda
+      p(id="mensaje")
+    
+    div(class="modal fade", id="myModal", role="dialog")
+      div(class="modal-dialog")
+        // Modal content
+        div(class="modal-content")
+          div(class="modal-header")
+            button(type="button", class="close", data-dismiss="modal") close
+            h4(class="modal-title") Jisho.org API
+          div(class="modal-body", id="modal-body")
+            p Some text in the modal.
+          div(class="modal-footer")
+            button(type="button", class="btn btn-default", data-dismiss="modal") Close
+
+  script.
+
+    var pagina = document.getElementById("pagina");
+    if (!pagina) pagina = 0;
+
+    var cajaBusqueda = document.getElementById("caja-busqueda");
+    cajaBusqueda.addEventListener("input", nuevaSolicitud);
+
+    var cajaComponer = document.getElementById("caja-componer");
+    function agregar(kanji) {
+      cajaComponer.value += kanji;
+    }
+
+    var limpiar = document.getElementById('limpiar');
+    limpiar.addEventListener('click', borra1)
+    function borra1() {
+      var len = cajaComponer.value.length;
+      cajaComponer.value = cajaComponer.value.substr(0,len-1);
+    }
+
+    var google = document.getElementById('google');
+    google.addEventListener('click', gtranslate);
+    function gtranslate() {
+      window.open('https://translate.google.es/?hl=es#ja/en/'+cajaComponer.value);
+    }
+
+    function nuevaSolicitud() {
+      pagina = 0;
+      solicitudxmlh();
+    }
+    function pagMas1() {
+      pagina += 1;
+      solicitudxmlh();
+    }
+    function pagMenos1() {
+      if (pagina != 0) {
+        pagina -= 1;
+        solicitudxmlh();
+      }
+    }
+
+    function solicitudxmlh() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+         if (this.readyState == 0) {
+          document.getElementById("mensaje").innerHTML = 'Estableciendo conexión con el servidor';
+        } else if (this.readyState == 1) {
+          document.getElementById("mensaje").innerHTML = 'Conexión establecida';
+        } else if (this.readyState == 2) {
+          document.getElementById("mensaje").innerHTML = 'Solicitud aceptada por el servidor';
+        } else if (this.readyState == 3) {
+          document.getElementById("mensaje").innerHTML = 'Servidor procesando solicitud';
+        } else if (this.readyState == 4 && this.status == 404) {
+          document.getElementById("mensaje").innerHTML = 'Solicitud no encontrada 404';
+        } else if (this.readyState == 4 && this.status == 200) {
+          if (this.responseText == 'No hay más páginas') {
+            document.getElementById("btn-sig").className = 'glyphicon glyphicon-remove';
+            document.getElementById("mensaje").innerHTML = '';
+          } else {
+            //document.getElementById("mensaje").innerHTML = '';
+            document.getElementById("vacio").innerHTML = this.responseText;
+          }
+        } else {
+          document.getElementById("vacio").innerHTML = 'Error desconocido';
+        }
+      };
+      xhttp.open("GET", "/query-data/"+cajaBusqueda.value+";"+pagina, true);
+      xhttp.send();
+    }
+
+    var jisho = document.getElementById('jisho-button');
+    jisho.addEventListener('click', jishoAPI);
+
+    function jishoAPI() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+         if (this.readyState == 0) {
+          document.getElementById("modal-body").innerHTML = 'Estableciendo conexión con el servidor';
+        } else if (this.readyState == 1) {
+          document.getElementById("modal-body").innerHTML = 'Conexión establecida';
+        } else if (this.readyState == 2) {
+          document.getElementById("modal-body").innerHTML = 'Solicitud aceptada por el servidor';
+        } else if (this.readyState == 3) {
+          document.getElementById("modal-body").innerHTML = 'Servidor procesando solicitud';
+        } else if (this.readyState == 4 && this.status == 404) {
+          document.getElementById("modal-body").innerHTML = 'Solicitud no encontrada 404';
+        } else if (this.readyState == 4 && this.status == 200) {
+          if (this.responseText == '{"meta":{"status":200},"data":[]}') {
+            document.getElementById("modal-body").innerHTML = 'Sin coincidencias en Jisho.org';
+          } else {
+            document.getElementById("modal-body").innerHTML = jishoResp(this.responseText);
+          }
+        } else {
+          document.getElementById("modal-body").innerHTML = 'Error desconocido: '+this.responseText;
+        }
+      };
+      xhttp.open("GET", "/proxy/"+cajaComponer.value, true);
+      xhttp.send();
+    }
+
+    // draw popup table from jisho.org
+    function jishoResp(data){
+      var obj = JSON.parse(data);//alert(obj.data[0].japanese[0].word);
+      var tableKanji = [];
+      var tableReading = [];
+      var tableEnglish = [];
+      for (var dataCount=0; dataCount < 4; dataCount++) {
+        var txt1 = '';
+        var txt2 = '';
+        var txt3 = '';
+        for (var japCount in obj.data[dataCount].japanese) {
+          txt1 += obj.data[dataCount].japanese[japCount].word + ', ';
+          txt2 += obj.data[dataCount].japanese[japCount].reading + ', ';
+        }
+        txt1 = txt1.slice(0, txt1.length-2);
+        txt2 = txt2.slice(0, txt2.length-2);
+        tableKanji.push(txt1);
+        tableReading.push(txt2);
+        for (var sensesCount in obj.data[dataCount].senses) {
+          for (var engCount in obj.data[dataCount].senses[sensesCount].english_definitions) {
+            txt3 += obj.data[dataCount].senses[sensesCount].english_definitions[engCount] + ', ';
+          }
+        }
+        txt3 = txt3.slice(0, txt3.length-2);
+        tableEnglish.push(txt3);
+      }
+      var jishoTable = '<table class="table"><thead><tr><th>Kanji</th><th>Lectura</th><th>Significado</th></tr></thead><tbody>';
+
+      for (var i=0; i<4; i++) {
+        jishoTable = jishoTable.concat('<tr>');
+        jishoTable = jishoTable.concat('<td>');
+        jishoTable = jishoTable.concat(tableKanji[i]);
+        jishoTable = jishoTable.concat('</td><td>');
+        jishoTable = jishoTable.concat(tableReading[i]);
+        jishoTable = jishoTable.concat('</td><td>');
+        jishoTable = jishoTable.concat(tableEnglish[i]);
+        jishoTable = jishoTable.concat('</td>');
+        jishoTable = jishoTable.concat('</tr>');
+      }
+      jishoTable = jishoTable.concat('</tbody></table>');
+      return jishoTable;
+    };
