@@ -1,3 +1,13 @@
+.hidethis {
+	display: none;
+}
+
+.btn {
+	margin-right: 5px;
+}
+
+
+/* Express CSS
 body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
@@ -5,4 +15,40 @@ body {
 
 a {
   color: #00B7FF;
+}*/
+
+
+/* Kanjisama old CSS
+td.a {
+	text-decoration: none;
 }
+button.buscar {
+	margin-left: 15px;
+}
+#kanjiStyle {
+	padding-top: 0px;
+	padding-bottom: 0px;
+	font-size: 2em;
+}
+.comp { 
+	display: none;
+}
+.hidethis {
+	display: none;
+}
+.well {
+	width: auto;
+	height: 52px;
+	font-size: 2.5em;
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+.white-popup {
+  position: relative;
+  background: #FFF;
+  padding: 20px;
+  width: auto;
+  max-width: 500px;
+  margin: 20px auto;
+}*/
