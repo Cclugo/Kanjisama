@@ -1,0 +1,12 @@
+# Carpetas
+node_modules/
+dist/
+
+# Archivos
+.env
+.env.*
+*.log
+npm-debug.log*
+
+# Otros
+.DS_Store
